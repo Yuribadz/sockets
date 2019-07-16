@@ -1,5 +1,6 @@
 cmake_minimum_required (VERSION 3.2 FATAL_ERROR)
 project (sockets)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Lookup for necessary libraries in system
 find_package(Threads)
 # Target server

@@ -13,7 +13,6 @@ int main(int argc, char* argv[])
 {
   struct sockaddr_in saddr, claddr;
   int sfd,j;
-  size_t msgLen;
   ssize_t numBytes;
   socklen_t len;
   char buf[BUF_SIZE];
