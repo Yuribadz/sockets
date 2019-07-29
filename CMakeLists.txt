@@ -17,8 +17,6 @@ target_sources(server
   PRIVATE 
   src/server.cpp
   src/EchoServ.cpp
-  src/become_daemon.cpp
-  src/inet_sockets.cpp
 )
 target_compile_options(server
     PUBLIC
