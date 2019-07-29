@@ -8,16 +8,17 @@ add_executable(server src/server.cpp)
 target_include_directories(server
     PUBLIC 
       inc
-      /usr/include
     PRIVATE 
 )
 #target_compile_definitions(server
 #    PRIVATE
 #)
 target_sources(server
-	PRIVATE 
-      src/server.cpp
-      src/main.cpp
+  PRIVATE 
+  src/server.cpp
+  src/EchoServ.cpp
+  src/become_daemon.cpp
+  src/inet_sockets.cpp
 )
 target_compile_options(server
     PUBLIC
@@ -36,3 +37,36 @@ set_target_properties(server
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
+
+
+# Target client
+add_executable(client src/main.cpp)
+target_include_directories(server
+  PUBLIC 
+  inc
+  PRIVATE 
+  )
+#target_compile_definitions(client
+#    PRIVATE
+#)
+target_sources(client
+  PRIVATE 
+  src/main.cpp
+  )
+target_compile_options(client
+  PUBLIC
+  )
+target_compile_features(client
+  PUBLIC
+  cxx_auto_type
+  cxx_range_for
+  )
+target_link_libraries(client 
+  PUBLIC
+  )
+set_target_properties(client
+  PROPERTIES
+  ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
+  LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
+  RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+  )
