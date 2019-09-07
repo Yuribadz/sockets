@@ -20,11 +20,11 @@ target_sources(server
 )
 target_compile_options(server
     PUBLIC
+    -g
 )
 target_compile_features(server
-    PUBLIC
-	  cxx_auto_type
-	  cxx_range_for
+  PUBLIC
+  cxx_std_17
 )
 target_link_libraries(server 
     PUBLIC
@@ -39,7 +39,7 @@ set_target_properties(server
 
 # Target client
 add_executable(client src/main.cpp)
-target_include_directories(server
+target_include_directories(client
   PUBLIC 
   inc
   PRIVATE 
@@ -53,11 +53,11 @@ target_sources(client
   )
 target_compile_options(client
   PUBLIC
+  -g
   )
 target_compile_features(client
   PUBLIC
-  cxx_auto_type
-  cxx_range_for
+  cxx_std_14
   )
 target_link_libraries(client 
   PUBLIC

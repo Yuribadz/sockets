@@ -1,7 +1,7 @@
 #include "EchoServ.hpp"
 
 namespace{
-	static void killChild(int sig)
+	void killChild(int sig)
 	{
 		int savedErrno;
 		
@@ -14,12 +14,12 @@ namespace{
 	};
 }
 
-EchoServ::EchoServ(int clientFd, int socketFd):
+EchoServ::EchoServ():
 	m_sa(),
-	m_cfd(clientFd),
-	m_sfd(socketFd)
+	m_cfd(0),
+	m_sfd(0)
 {
-	printf("Echoserv started");
+	printf("Echoserv started\n");
 }
 
 
@@ -30,7 +30,7 @@ EchoServ::EchoServ(int clientFd, int socketFd):
    If 'addrLen' is not NULL, then use it to return the size of the
    address structure for the address family for this socket.
    Return the socket descriptor on success, or -1 on error. */
-static int inetPassiveSocket(const char *service,
+int EchoServ::inetPassiveSocket(const char *service,
 							 int type, socklen_t *addrlen,
 							 bool doListen,
 							 int backlog)
@@ -43,11 +43,13 @@ static int inetPassiveSocket(const char *service,
     hints.ai_canonname = NULL;
     hints.ai_addr = NULL;
     hints.ai_next = NULL;
+	hints.ai_protocol = IPPROTO_TCP;
     hints.ai_socktype = type;
-    hints.ai_family = AF_UNSPEC;        /* Allows IPv4 or IPv6 */
+    hints.ai_family = AF_INET;        /* Allows IPv4 or IPv6 */
     hints.ai_flags = AI_PASSIVE;        /* Use wildcard IP address */
-
     s = getaddrinfo(NULL, service, &hints, &result);
+	syslog(LOG_ERR, "Could not create server socket (%s)\n", strerror(errno));
+	syslog(LOG_ERR, "Could not create server socket (%d)", s);
     if (s != 0)
         return -1;
 
@@ -87,6 +89,7 @@ static int inetPassiveSocket(const char *service,
     if (rp != NULL && addrlen != NULL)
 		/* Return address structure size */
         *addrlen = rp->ai_addrlen;
+
 
     freeaddrinfo(result);
 
@@ -175,7 +178,7 @@ int EchoServ::start()
 
 	if(m_sfd == -1)
     {
-		printf("Could not create server socket (%s)",
+		printf("Could not create server socket (%s)\n",
 			   strerror(errno));
 		exit(EXIT_FAILURE);
     }

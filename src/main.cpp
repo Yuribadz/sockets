@@ -1,11 +1,7 @@
 #include <iostream>
-#include <string>
+#include "ThreadQueue.hpp"
 int main()
 {
-  std::string yuri;
-  yuri.append("nice");
-  std::cout << yuri << "\n";
-  return 0;
+	std::cout << "test";
+	return 0;
 }
-
-

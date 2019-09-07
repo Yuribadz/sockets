@@ -32,23 +32,18 @@ public:
 	static constexpr const short BD_MAX_CLOSE = 8192;
                       
 
-	EchoServ(int clientFd, int socketFd);
+	EchoServ();
 	int start();
 
 private:
 	int becomeDaemon(int flags);
-	int inetConnect(const char *host,
-					const char *service,
-					int type);
 	int inetListen(const char *service,
 				   int backlog,
 				   socklen_t *addrlen);
-	int inetBind(const char *service,
-				 int type,
-				 socklen_t *addrlen);
-	char *inetAddressStr(const struct sockaddr *addr,
-						 socklen_t addrlen,
-						 char *addrStr, int addrStrLen);
+	int inetPassiveSocket(const char *service,
+					  int type, socklen_t *addrlen,
+					  bool doListen,
+					  int backlog);
 	static void handleRequest(int clientFd);
 
 
