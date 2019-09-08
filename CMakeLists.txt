@@ -57,10 +57,12 @@ target_compile_options(client
   )
 target_compile_features(client
   PUBLIC
-  cxx_std_14
+  cxx_std_17
   )
 target_link_libraries(client 
   PUBLIC
+  -latomic
+  -lpthread
   )
 set_target_properties(client
   PROPERTIES
