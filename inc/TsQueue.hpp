@@ -112,8 +112,6 @@ public:
 		std::unique_ptr<node> p(new node);
 		{
 			std::lock_guard<std::mutex> tail_lock(tail_mutex);
-			std::cout << "thread id= " << std::this_thread::get_id() <<
-				" is pushing value=" << new_value << "\n";
 			tail->data = new_data;
 			node* const new_tail=p.get();
 			tail->next= std::move(p);
