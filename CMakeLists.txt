@@ -1,5 +1,7 @@
 cmake_minimum_required (VERSION 3.2 FATAL_ERROR)
 project (sockets)
+
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Lookup for necessary libraries in system
 find_package(Threads)
@@ -50,10 +52,11 @@ target_include_directories(client
 target_sources(client
   PRIVATE 
   src/main.cpp
+  src/ThreadPool.cpp
   )
 target_compile_options(client
   PUBLIC
-  -g
+  #-fsanitize=thread -O2 -g
   )
 target_compile_features(client
   PUBLIC
@@ -61,12 +64,15 @@ target_compile_features(client
   )
 target_link_libraries(client 
   PUBLIC
-  -latomic
-  -lpthread
+  Threads::Threads
+  #-latomic
+  #-fsanitize=thread
   )
 set_target_properties(client
   PROPERTIES
   ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
   LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
   RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+#  LINK_FLAGS -fsanitize=thread
+#  COMPILE_FLAGS -fsanitize=thread
   )

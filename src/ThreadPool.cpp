@@ -1,11 +1,11 @@
 #include "ThreadPool.hpp"
-
+#include <iostream>
 thread_local WsQueue* ThreadPool::m_local_work_queue = nullptr;
 thread_local unsigned ThreadPool::m_my_index = 0;
 
 ThreadPool::ThreadPool() : m_done(false), m_joiner(m_threads)
 {
-    unsigned const thread_count = 4;
+    unsigned const thread_count = 6;
     try
     {
         for (unsigned i = 0; i < thread_count; ++i)

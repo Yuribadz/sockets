@@ -1,53 +1,52 @@
 #include <iostream>
 #include <string>
 #include <thread>
-#include "TsQueue.hpp"
+#include "ThreadPool.hpp"
+#include <deque>
+#include <vector>
+#include <utility>
+class Scoped_thread{
+	std::thread t;
+public:
+	explicit Scoped_thread(std::thread t_): t(std::move(t_)){
+		if ( !t.joinable()) throw std::logic_error("No thread");
+	}
+	~Scoped_thread(){
+		t.join();
+	}
+	Scoped_thread(Scoped_thread&)= delete;
+	Scoped_thread& operator=(Scoped_thread const &)= delete;
+};
 int main()
 {
-	TsQueue<int> que;
-	int count = 0;
-	auto func1 = [&que]{for(int i = 0; i < 100000; ++i)
-	{
-		que.push(i);
-	}};
-	auto func2 = [&que]{for(int i = 100000; i < 200000; ++i)
-		{
-			que.push(i);
-		}};
-	auto func3 = [&que]{for(int i = 200000; i < 300000; ++i)
-		{
-			que.push(i);
-		}};
-	auto func4 = [&que]{for(int i = 300000; i < 400000; ++i)
-		{
-			que.push(i);
-		}};
+	auto handler = []
+				   {
+					   ThreadPool tp;
+					   int counter = 0;
+					   std::deque<int> polledFds(1000000,0);
+					   std::vector<std::future<std::string>> results;
+					   results.reserve(polledFds.size());
+					   for(auto polledFd: polledFds)
+					   {
+						   ++counter;
+						   auto task = [counter]{
+										   //std::cout << "Thread = " <<
+										   //std::this_thread::get_id() << "\n";
+										   std::string nice = "nice ";
+										   nice.append(
+											   std::to_string(counter));
+										   return nice;
+									   };
+						   results.push_back(tp.submit(task));
+					   }
+					   for(auto& res: results)
+					   {
+						   res.get();
+					   }
+					   results.clear();
+				   };
+	Scoped_thread(std::thread(handler));				   
+					 
 	
-	auto popperPipe = [&que, &count]
-					  {
-						  while(auto val = que.wait_and_pop())
-						  {
-							  ++count;
-							  std::cout << "popped= " << *val.get() << "\n";
-							  if(count == 400000)
-							  {
-								  std::cout << "400k values collected";
-								  break;
-							  }
-							  
-						  };
-						  std::cout << "count= " << count << "\n";
-					  };
-	std::thread thread3(popperPipe);
-	thread3.detach();
-	std::thread thread1(func1);
-	std::thread thread2(func3);
-	std::thread thread4(func4);
-	std::thread thread5(func2);
-	thread1.join();
-	thread2.join();
-	thread4.join();
-	thread5.join();
-    std::this_thread::sleep_for(std::chrono::seconds(5));
     return 0;
 }
