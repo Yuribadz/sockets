@@ -1,25 +1,48 @@
 APP     := server
+TEST    := test_server
+CXX := g++
 
-CC := g++
-OBJDIR  := obj
-SRC_DIR := src
-INC_DIR := inc
-GTEST_INCLUDES := /usr/include/gtest/
-GTEST_LIBS := -lgtest
-GMOCK_INCLUDES := /usr/include/gmock/
-GMOCK_LIBS := -lgmock
-PTHREAD_LIBS = -lpthread
+# Project paths
+OBJDIR   := obj
+SRC_DIR  := src
+INC_DIR  := inc
+TEST_DIR := test 
+
+# Library flags and paths
+GTEST_INCLUDES := usr/include/
+GTEST_LIBS     := -lgtest -lgtest_main
+GMOCK_INCLUDES := usr/include/
+GMOCK_LIBS     := -lgmock
+PTHREAD_LIBS   := -lpthread
+
+# Source files names and rules
 SRCS    := $(shell find $(SRC_DIR) -name '*.cpp')
 SRCDIRS := $(shell find $(SRC_DIR) -name '*.cpp' -exec dirname {} \; | uniq)
 OBJS    := $(patsubst %.cpp,$(OBJDIR)/%.o,$(SRCS))
 DEPS    := $(patsubst %.cpp,$(OBJDIR)/%.d,$(SRCS))
 
-DEBUG    := -g
+TEST_SRCS    := $(filter-out src/server.cpp, $(SRCS))
+TEST_OBJS    := $(filter-out obj/src/server.o, $(OBJS))
+TEST_DEPS    := $(filter-out obj/src/server.d, $(DEPS))
 
-INCLUDES := -I./$(INC_DIR)
-CPPFLAGS   := $(DEBUG) -Wall -Wpedantic $(INCLUDES) -c
-# LDFLAGS  := $(QLIBC_RPATH) $(QLIBC_LIBRARY_PATH) $(YAJL_RPATH) $(YAJL_LIBRARY_PATH)
+TEST_SRCS    += $(shell find $(TEST_DIR) -name '*.cpp')
+TEST_SRCDIRS := $(shell find $(TEST_DIR) -name '*.cpp' -exec dirname {} \; | uniq)
+test: SRCDIRS += $(TEST_SRCDIRS)
+TEST_OBJS    += $(patsubst %.cpp,$(OBJDIR)/%.o,$(TEST_SRCS))
+TEST_DEPS    += $(patsubst %.cpp,$(OBJDIR)/%.d,$(TEST_SRCS))
+
+# Profiling and debug flags
+DEBUG   := -g
+GPROF   := -pg
+
+INCLUDES       := -I./$(INC_DIR)
+test: INCLUDES += -I./$(GTEST_INCLUDES) -I./$(GMOCK_INCLUDES)
+CPPFLAGS       := $(DEBUG) -Wall -Wpedantic $(INCLUDES) -c
+test: CPPFLAGS = $(DEBUG) -Wall -Wpedantic $(INCLUDES) $(TEST_INCLUDES) -c
+#LDFLAGS  :=
+# Libraries
 LIBS     := $(PTHREAD_LIBS)
+test: LIBS = $(PTHREAD_LIBS) $(GMOCK_LIBS) $(GTEST_LIBS)
 
 DEPENDS  = -MT $@ -MD -MP -MF $(subst .o,.d,$@)
 
@@ -27,14 +50,20 @@ SHELL    = /bin/sh
 
 .PHONY: all clean distclean
 
-
 all: buildrepo $(APP)
 
+print-%  : ; @echo $* = $($*)
+
+test: buildrepo $(TEST)
+
 $(APP): $(OBJS)
-	$(CC) $(LDFLAGS) $^ $(LIBS) -o $@
+	$(CXX) $(LDFLAGS) $^ $(LIBS) -o $@
+
+$(TEST): $(TEST_OBJS)
+	$(CXX) $(LDFLAGS) $^ $(LIBS) -o $@
 
 $(OBJDIR)/%.o: %.cpp
-	$(CC) $(CPPFLAGS) $(DEPENDS) $< -o $@
+	$(CXX) $(CPPFLAGS) $(DEPENDS) $< -o $@
 
 clean:
 	$(RM) -r $(OBJDIR)
@@ -53,8 +82,10 @@ define make-repo
    done
 endef
 
-ifneq "$(MAKECMDGOALS)" "distclean"
-ifneq "$(MAKECMDGOALS)" "clean"
+ifeq "$(MAKECMDGOALS)" "all"
 -include $(DEPS)
 endif
+
+ifeq "$(MAKECMDGOALS)" "test"
+-include $(TEST_DEPS)
 endif
