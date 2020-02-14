@@ -6,7 +6,7 @@ CXX := g++
 OBJDIR   := obj
 SRC_DIR  := src
 INC_DIR  := inc
-TEST_DIR := test 
+TEST_DIR := test
 
 # Library flags and paths
 GTEST_INCLUDES := usr/include/
@@ -14,6 +14,7 @@ GTEST_LIBS     := -lgtest -lgtest_main
 GMOCK_INCLUDES := usr/include/
 GMOCK_LIBS     := -lgmock
 PTHREAD_LIBS   := -lpthread
+LIBUV_LIBS     := -luv
 
 # Source files names and rules
 SRCS    := $(shell find $(SRC_DIR) -name '*.cpp')
@@ -34,6 +35,8 @@ TEST_DEPS    += $(patsubst %.cpp,$(OBJDIR)/%.d,$(TEST_SRCS))
 # Profiling and debug flags
 DEBUG   := -g
 GPROF   := -pg
+GTEST_FILTER  := --gtest_filter=
+FILTER := *
 
 INCLUDES       := -I./$(INC_DIR)
 test: INCLUDES += -I./$(GTEST_INCLUDES) -I./$(GMOCK_INCLUDES)
@@ -41,7 +44,7 @@ CPPFLAGS       := $(DEBUG) -Wall -Wpedantic $(INCLUDES) -c
 test: CPPFLAGS = $(DEBUG) -Wall -Wpedantic $(INCLUDES) $(TEST_INCLUDES) -c
 #LDFLAGS  :=
 # Libraries
-LIBS     := $(PTHREAD_LIBS)
+LIBS     := $(PTHREAD_LIBS) $(LIBUV_LIBS)
 test: LIBS = $(PTHREAD_LIBS) $(GMOCK_LIBS) $(GTEST_LIBS)
 
 DEPENDS  = -MT $@ -MD -MP -MF $(subst .o,.d,$@)
@@ -61,6 +64,7 @@ $(APP): $(OBJS)
 
 $(TEST): $(TEST_OBJS)
 	$(CXX) $(LDFLAGS) $^ $(LIBS) -o $@
+	./$@ $(GTEST_FILTER)$(FILTER)
 
 $(OBJDIR)/%.o: %.cpp
 	$(CXX) $(CPPFLAGS) $(DEPENDS) $< -o $@
