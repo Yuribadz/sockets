@@ -9,6 +9,8 @@ INC_DIR  := inc
 TEST_DIR := test
 
 # Library flags and paths
+ASIO_INCLUDES  := lib/asio/include/
+ASIO_FLAGS     := -DASIO_STANDALONE
 GTEST_INCLUDES := usr/include/
 GTEST_LIBS     := -lgtest -lgtest_main
 GMOCK_INCLUDES := usr/include/
@@ -38,10 +40,10 @@ GPROF   := -pg
 GTEST_FILTER  := --gtest_filter=
 FILTER := *
 
-INCLUDES       := -I./$(INC_DIR)
+INCLUDES       := -I./$(INC_DIR) -I./$(ASIO_INCLUDES) 
 test: INCLUDES += -I./$(GTEST_INCLUDES) -I./$(GMOCK_INCLUDES)
-CPPFLAGS       := $(DEBUG) -Wall -Wpedantic $(INCLUDES) -c
-test: CPPFLAGS = $(DEBUG) -Wall -Wpedantic $(INCLUDES) $(TEST_INCLUDES) -c
+CPPFLAGS       := $(DEBUG) -Wall -Wpedantic $(INCLUDES) -c $(ASIO_FLAGS)
+test: CPPFLAGS = $(DEBUG) -Wall -Wpedantic $(INCLUDES) $(TEST_INCLUDES) -c $(ASIO_FLAGS)
 #LDFLAGS  :=
 # Libraries
 LIBS     := $(PTHREAD_LIBS) $(LIBUV_LIBS)

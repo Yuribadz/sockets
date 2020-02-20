@@ -1,3 +1,6 @@
+#ifndef THREADPOOL_HPP
+#define THREADPOOL_HPP
+
 #include "FunctionWrapper.hpp"
 #include "TsQueue.hpp"
 #include "WsQueue.hpp"
@@ -42,3 +45,4 @@ class ThreadPool {
   }
   void run_pending_task();
 };
+#endif

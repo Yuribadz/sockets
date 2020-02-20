@@ -1,67 +1,54 @@
 #include <iostream>
-#include <string>
-#include <thread>
-#include "ThreadPool.hpp"
-#include <deque>
-#include <vector>
-#include <utility>
-#include <assert.h>
-#include <uv.h>
+#include "asio.hpp"
+#include <functional>
 
-namespace {
-uv_fs_t open_req;
-uv_fs_t read_req;
-uv_fs_t write_req;
-uv_fs_t close_req;
-uv_buf_t iov;
-
-char buf[0xFFFF];
-void on_write(uv_fs_t *req);
-void on_read(uv_fs_t *req);
-void on_open(uv_fs_t *req);
-
-void on_write(uv_fs_t *req) {
-  if (req->result < 0) {
-    std::cout << "Write error : " << uv_strerror(static_cast<int>(req->result));
-  } else {
-    std::cout << "\nON_WRITE LOOP\n";
-    uv_fs_read(uv_default_loop(), &read_req, open_req.result, &iov, 1, -1,
-               &on_read);
+class Printer {
+ public:
+  Printer(asio::io_context &io)
+      :
+      _strand(io),
+      _timer1(io, asio::chrono::seconds(1)),
+      _timer2(io, asio::chrono::seconds(1)),
+      _count(0) {
+    _timer1.async_wait(
+        asio::bind_executor(_strand, std::bind(&Printer::print1, this)));
+    _timer2.async_wait(
+        asio::bind_executor(_strand, std::bind(&Printer::print2, this)));
   }
-}
-void on_read(uv_fs_t *req) {
-  if (req->result < 0) {
-    std::cout << "Read error : " << uv_strerror(static_cast<int>(req->result));
-  } else if (req->result == 0) {
-    std::cout << "ON_READ RESULT 0\n";
-    uv_fs_close(uv_default_loop(), &close_req, open_req.result, NULL);
-  } else if (req->result > 0) {
-    std::cout << "ON_READ LOOP\n";
-    iov.len = req->result;
-    uv_fs_write(uv_default_loop(), &write_req, 1, &iov, 1, -1, on_write);
+  ~Printer() {
+    std::cout << "Final count is " << _count << "\n";
   }
-}
 
-void on_open(uv_fs_t *req) {
-  std::cout << "ASSERT ON OPEN\n";
-  assert(req == &open_req);
-  if (req->result >= 0) {
-    iov = uv_buf_init(buf, sizeof(buf));
-    // OFFSET -1 MEANS CURRENT FILE POSITION. RETARDED
-    std::cout << "BUFFER INIT\n";
-    uv_fs_read(uv_default_loop(), &read_req, req->result, &iov, 1, -1, on_read);
-  } else {
-    std::cout << "Error opening file : "
-              << uv_strerror(static_cast<int>(req->result));
+  void print1() {
+    if (_count < 10) {
+      std::cout << "Timer 1: " << _count << "\n";
+      ++_count;
+      _timer1.expires_at(_timer1.expires_at() + asio::chrono::seconds(1));
+      _timer1.async_wait(
+          asio::bind_executor(_strand, std::bind(&Printer::print1, this)));
+    }
   }
-}
-}
-int main(int argc, char **argv) {
-  uv_fs_open(uv_default_loop(), &open_req, argv[1], O_RDONLY, 0, on_open);
-  uv_run(uv_default_loop(), UV_RUN_DEFAULT);
+  void print2() {
+    if (_count < 10) {
+      std::cout << "Timer 1: " << _count << "\n";
+      ++_count;
+      _timer2.expires_at(_timer2.expires_at() + asio::chrono::seconds(1));
+      _timer2.async_wait(
+          asio::bind_executor(_strand, std::bind(&Printer::print2, this)));
+    }
+  }
+ private:
+  asio::io_context::strand _strand;
+  asio::steady_timer _timer1;
+  asio::steady_timer _timer2;
+  int _count;
+};
 
-  uv_fs_req_cleanup(&open_req);
-  uv_fs_req_cleanup(&read_req);
-  uv_fs_req_cleanup(&write_req);
+int main() {
+  asio::io_context io;
+  Printer p(io);
+  asio::thread([&]{io.run();});
+  io.run();
+
   return 0;
 }
