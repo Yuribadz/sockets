@@ -1,14 +1,15 @@
 #ifndef THREADPOOL_HPP
 #define THREADPOOL_HPP
 
-#include "FunctionWrapper.hpp"
-#include "TsQueue.hpp"
-#include "WsQueue.hpp"
-#include "Joiner.hpp"
 #include <atomic>
 #include <vector>
 #include <future>
 #include <memory>
+
+#include "functionwrapper.hpp"
+#include "joiner.hpp"
+#include "tsqueue.hpp"
+#include "wsqueue.hpp"
 
 class ThreadPool {
  private:

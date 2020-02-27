@@ -1,9 +1,10 @@
 #ifndef WSQUEUE_HPP
 #define WSQUEUE_HPP
 
-#include "FunctionWrapper.hpp"
 #include <deque>
 #include <mutex>
+
+#include "functionwrapper.hpp"
 class WsQueue {
  private:
   typedef FunctionWrapper data_type;

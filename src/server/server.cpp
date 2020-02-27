@@ -1,39 +1,30 @@
-#include <ctime>
-#include <iostream>
-#include <string>
-#include <asio.hpp>
 
+#include <iostream>
+#include <list>
+
+#include "asio.hpp"
+#include "tcpserver.hpp"
 using asio::ip::tcp;
 
-std::string make_daytime_string()
-{
-  using namespace std; // For time_t, time and ctime;
-  time_t now = time(0);
-  return ctime(&now);
-}
 
-int main()
-{
-  try
-  {
+int main(int argc, char *argv[]) {
+  try {
+    if (argc < 2) {
+      std::cerr << "Usage: chat_server <port> [<port> ...]\n";
+      return 1;
+    }
+
     asio::io_context io_context;
 
-    tcp::acceptor acceptor(io_context, tcp::endpoint(tcp::v4(), 13));
-
-    for (;;)
-    {
-      tcp::socket socket(io_context);
-      acceptor.accept(socket);
-
-      std::string message = make_daytime_string();
-
-      asio::error_code ignored_error;
-      asio::write(socket, asio::buffer(message), ignored_error);
+    std::list<TcpServer> servers;
+    for (int i = 1; i < argc; ++i) {
+      tcp::endpoint endpoint(tcp::v4(), std::atoi(argv[i]));
+      servers.emplace_back(io_context, endpoint);
     }
-  }
-  catch (std::exception& e)
-  {
-    std::cerr << e.what() << std::endl;
+
+    io_context.run();
+  } catch (std::exception &e) {
+    std::cerr << "Exception: " << e.what() << "\n";
   }
 
   return 0;
