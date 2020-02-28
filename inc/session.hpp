@@ -1,21 +1,19 @@
-
 #ifndef INC_SESSION_HPP
 #define INC_SESSION_HPP
 
 #include "serverclient.hpp"
-#include "clientlist.hpp"
 #include "asio.hpp"
+#include "tcpclientlist.hpp"
 
 using asio::ip::tcp;
-
 
 class Session : public ServerClient,
     public std::enable_shared_from_this<Session> {
  public:
-  Session(tcp::socket socket, ClientsList &room)
+  Session(tcp::socket socket, AbstractClientsList &clients)
       :
       socket_(std::move(socket)),
-      clients_(room) {
+      clients_(clients) {
   }
 
   void start() {
@@ -41,8 +39,7 @@ class Session : public ServerClient,
         clients_.leave(shared_from_this());
       }
     };
-    asio::async_read(socket_,
-                     asio::buffer(read_msg_.data(), msg::header_length),
+    asio::async_read(socket_, asio::buffer(read_msg_.data(), 4),
                      read_cb);
   }
 
@@ -80,10 +77,9 @@ class Session : public ServerClient,
   }
 
   tcp::socket socket_;
-  ClientsList &clients_;
+  AbstractClientsList &clients_;
   msg read_msg_;
   task_queue write_msgs_;
 };
-
 
 #endif

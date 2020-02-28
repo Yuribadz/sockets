@@ -1,7 +1,7 @@
 
 #include <iostream>
 #include <list>
-
+#include <cstdio>
 #include "asio.hpp"
 #include "tcpserver.hpp"
 using asio::ip::tcp;
@@ -18,7 +18,7 @@ int main(int argc, char *argv[]) {
 
     std::list<TcpServer> servers;
     for (int i = 1; i < argc; ++i) {
-      tcp::endpoint endpoint(tcp::v4(), std::atoi(argv[i]));
+      tcp::endpoint endpoint(tcp::v4(), std::stoi(argv[i]));
       servers.emplace_back(io_context, endpoint);
     }
 
@@ -26,6 +26,5 @@ int main(int argc, char *argv[]) {
   } catch (std::exception &e) {
     std::cerr << "Exception: " << e.what() << "\n";
   }
-
   return 0;
 }

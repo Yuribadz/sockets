@@ -4,75 +4,70 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <deque>
+#include <algorithm>
+#include <iostream>
 
+namespace {
+constexpr std::size_t header_length = 4;
+constexpr std::size_t max_body_length = 512;
+}
+
+template<std::size_t header_length, std::size_t max_body_length>
 class io_msg {
  public:
-  const unsigned int header_length;
-  const unsigned int max_body_length;
-
-  io_msg()
-      :
-      header_length{4},
-      max_body_length{512},
-      body_length_{0} {
-  }
- io_msg(unsigned int head, unsigned int body): header_length(head),body_length_(0)
- {
- }
 
   const char* data() const {
-    return data_;
+    return m_data.data();
   }
 
   char* data() {
-    return data_;
+    return m_data.data();
   }
 
   std::size_t length() const {
-    return header_length + body_length_;
+    return header_length + m_body_length;
   }
 
   const char* body() const {
-    return data_ + header_length;
+    return m_data.data() + header_length;
   }
 
   char* body() {
-    return data_ + header_length;
+    return m_data.data() + header_length;
   }
 
   std::size_t body_length() const {
-    return body_length_;
+    return m_body_length;
   }
 
   void body_length(std::size_t new_length) {
-    body_length_ = new_length;
-    if (body_length_ > max_body_length)
-      body_length_ = max_body_length;
+    m_body_length = new_length;
+    if (m_body_length > max_body_length)
+      m_body_length = max_body_length;
   }
 
   bool decode_header() {
-    char header[header_length + 1] = "";
-    std::strncat(header, data_, header_length);
-    body_length_ = std::atoi(header);
-    if (body_length_ > max_body_length) {
-      body_length_ = 0;
+    std::array<char,header_length + 1> header;
+    std::copy_n(m_data.begin(), header_length + 1, header.begin());
+    m_body_length = std::stoi(header.data());
+    if (m_body_length > max_body_length) {
+      m_body_length = 0;
       return false;
     }
     return true;
   }
 
   void encode_header() {
-    char header[header_length + 1] = "";
-    std::sprintf(header, "%4d", static_cast<int>(body_length_));
-    std::memcpy(data_, header, header_length);
+    const std::string body_count(std::to_string(m_body_length));
+    std::copy_n(body_count.begin(), header_length, m_data.begin());
   }
 
  private:
-  char data_[header_length + max_body_length];
-  std::size_t body_length_;
+  std::array<char, header_length + max_body_length> m_data;
+  std::size_t m_body_length;
 };
 
-typedef io_msg msg;
-typedef std::deque<msg> task_queue;
-
+using msg = io_msg<header_length, max_body_length>;
+using task_queue = std::deque<msg>;
 #endif

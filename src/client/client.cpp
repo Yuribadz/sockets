@@ -68,7 +68,7 @@ private:
       }
     };
     asio::async_read(socket_,
-        asio::buffer(read_msg_.data(), msg::header_length),
+        asio::buffer(read_msg_.data(), 4),
         rb_or_close);
   }
 
@@ -138,8 +138,8 @@ int main(int argc, char* argv[])
 
     std::thread t([&io_context](){ io_context.run(); });
 
-    char line[msg::max_body_length + 1];
-    while (std::cin.getline(line, msg::max_body_length + 1))
+    char line[512 + 1];
+    while (std::cin.getline(line, 512 + 1))
     {
       msg message;
       message.body_length(std::strlen(line));
