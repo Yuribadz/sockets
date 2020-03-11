@@ -18,7 +18,7 @@ class TcpClientsList : public AbstractClientsList {
   }
   void join(client_ptr client) override;
   void leave(client_ptr client) override;
-  void deliver(const msg &msg) override;
+  void deliver(std::unique_ptr<AbstractIoMsg>const & msg) override;
 
  ~TcpClientsList(){};
  protected:

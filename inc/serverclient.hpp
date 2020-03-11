@@ -3,13 +3,14 @@
 #define CLIENT_HPP
 
 #include <memory>
-#include "io_msg.hpp"
+
+#include "tcpiomsg.hpp"
 
 class ServerClient {
  public:
+  virtual void deliver(std::unique_ptr<AbstractIoMsg> const &msg) = 0;
   virtual ~ServerClient() {
-  }
-  virtual void deliver(const msg &msg) = 0;
+  };
 };
 
 typedef std::shared_ptr<ServerClient> client_ptr;

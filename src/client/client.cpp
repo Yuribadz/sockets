@@ -3,13 +3,10 @@
 #include <iostream>
 #include <thread>
 
-#include "io_msg.hpp"
+#include "tcpiomsg.hpp"
 #include "asio.hpp"
 
 using asio::ip::tcp;
-
-typedef io_msg<4,512> msg;
-typedef std::deque<io_msg<4,512>> message_queue;
 
 class chat_client
 {
@@ -22,7 +19,7 @@ public:
     do_connect(endpoints);
   }
 
-  void write(const msg& msg)
+  void write(const tcpmsg& msg)
   {
     asio::post(io_context_,
         [this, msg]()
@@ -116,8 +113,8 @@ private:
 private:
   asio::io_context& io_context_;
   tcp::socket socket_;
-  msg read_msg_;
-  message_queue write_msgs_;
+  tcpmsg read_msg_;
+  task_queue write_msgs_;
 };
 
 int main(int argc, char* argv[])
@@ -141,7 +138,7 @@ int main(int argc, char* argv[])
     char line[512 + 1];
     while (std::cin.getline(line, 512 + 1))
     {
-      msg message;
+      tcpmsg message;
       message.body_length(std::strlen(line));
       std::memcpy(message.body(), line, message.body_length());
       message.encode_header();
