@@ -29,8 +29,11 @@ class Session : public ServerClient,
 
   void deliver(std::unique_ptr<AbstractIoMsg> const &msg) override {
     std::cout << "deliver called" << "\n";
+    std::unique_ptr<AbstractIoMsg> sent = std::make_unique<TcpIoMsg>();
+    sent->body_length(msg->body_length());
+    std::strncpy(sent->data(), msg->const_data(), 516);
     bool write_in_progress = !write_msgs_.empty();
-    write_msgs_.push_back(std::move(msg));
+    write_msgs_.push_back(std::move(sent));
     if (!write_in_progress) {
       do_write();
     }

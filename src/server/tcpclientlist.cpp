@@ -20,10 +20,10 @@ void TcpClientsList::deliver(std::unique_ptr<AbstractIoMsg> const &msg) {
   std::unique_ptr<AbstractIoMsg> sent = std::make_unique<TcpIoMsg>();
   sent->body_length(msg->body_length());
   std::strncpy(sent->data(), msg->const_data(), tcpMsgLength);
-  m_recent_msgs.push_back(sent);
+  m_recent_msgs.push_back(std::move(sent));
   while (m_recent_msgs.size() > m_max_m_recent_msgs_)
     m_recent_msgs.pop_front();
 
-  for (auto const &client : m_Clients)
+  for (auto &client : m_Clients)
     client->deliver(msg);
 }

@@ -12,8 +12,7 @@ class TcpClientsList : public AbstractClientsList {
   TcpClientsList() = delete;
   TcpClientsList(unsigned int max_recent_messages)
       :
-      AbstractClientsList(),
-      m_max_m_recent_msgs_(max_recent_messages) {
+      m_max_m_recent_msgs_(max_recent_messages){
 
   }
   void join(client_ptr client) override;

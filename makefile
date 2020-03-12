@@ -22,7 +22,6 @@ GTEST_LIBS     := -lgtest -lgtest_main
 GMOCK_INCLUDES := usr/include/
 GMOCK_LIBS     := -lgmock
 PTHREAD_LIBS   := -lpthread
-LIBUV_LIBS     := -luv
 
 # Source files names and rules
 SRCS    := $(shell find $(SRC_DIR) -name '*.cpp')

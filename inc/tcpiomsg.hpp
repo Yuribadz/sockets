@@ -12,6 +12,7 @@
 
 class TcpIoMsg : public AbstractIoMsg {
  public:
+  TcpIoMsg() = default;
   enum class TcpMsgHeaderLength : int {
     HEADER_LENGTH = 4
   };
