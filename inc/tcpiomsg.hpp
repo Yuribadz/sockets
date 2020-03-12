@@ -18,7 +18,7 @@ class TcpIoMsg : public AbstractIoMsg {
   enum class TcpMsgMaxBodyLength : int {
     MAX_BODY_LENGTH = 512
   };
-  const char* data() const override {
+  const char* const_data() const override {
     return msgData.data();
   }
 
@@ -27,15 +27,15 @@ class TcpIoMsg : public AbstractIoMsg {
   }
 
   std::size_t length() const override {
-    return static_cast<int>(TcpMsgHeaderLength::HEADER_LENGTH) + m_body_length;
+    return as_integer(TcpMsgHeaderLength::HEADER_LENGTH) + m_body_length;
   }
 
   const char* body() const override {
-    return msgData.data() + static_cast<int>(TcpMsgHeaderLength::HEADER_LENGTH);
+    return msgData.data() + as_integer(TcpMsgHeaderLength::HEADER_LENGTH);
   }
 
   char* body() override {
-    return msgData.data() + static_cast<int>(TcpMsgHeaderLength::HEADER_LENGTH);
+    return msgData.data() + as_integer(TcpMsgHeaderLength::HEADER_LENGTH);
   }
 
   std::size_t body_length() const override {
@@ -44,14 +44,14 @@ class TcpIoMsg : public AbstractIoMsg {
 
   void body_length(std::size_t new_length) override {
     m_body_length = new_length;
-    if (m_body_length > static_cast<int>(TcpMsgMaxBodyLength::MAX_BODY_LENGTH))
-      m_body_length = static_cast<int>(TcpMsgMaxBodyLength::MAX_BODY_LENGTH);
+    if (m_body_length > as_integer(TcpMsgMaxBodyLength::MAX_BODY_LENGTH))
+      m_body_length = as_integer(TcpMsgMaxBodyLength::MAX_BODY_LENGTH);
   }
   std::array<char,
-      static_cast<int>(TcpMsgMaxBodyLength::MAX_BODY_LENGTH)
-          + static_cast<int>(TcpMsgHeaderLength::HEADER_LENGTH)> msgData;
+  as_integer(TcpMsgMaxBodyLength::MAX_BODY_LENGTH)
+          + as_integer(TcpMsgHeaderLength::HEADER_LENGTH)> msgData;
   std::size_t m_body_length;
 };
 
-using tcp_msg_queue = std::deque<TcpIoMsg>;
+using tcp_msg_queue = std::deque<std::unique_ptr<AbstractIoMsg>>;
 #endif

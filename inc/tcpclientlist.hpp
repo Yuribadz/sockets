@@ -24,7 +24,7 @@ class TcpClientsList : public AbstractClientsList {
  protected:
   std::set<client_ptr> m_Clients;
   unsigned int m_max_m_recent_msgs_;
-  task_queue m_recent_msgs;
+  tcp_msg_queue m_recent_msgs;
 };
 
 #endif

@@ -15,7 +15,7 @@ constexpr auto as_integer(
 class AbstractIoMsg {
  public:
 
-  virtual const char* data() const = 0;
+  virtual const char* const_data() const = 0;
   virtual char* data() = 0;
   virtual std::size_t length() const = 0;
   virtual const char* body() const = 0;

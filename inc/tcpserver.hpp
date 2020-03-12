@@ -26,7 +26,7 @@ class TcpServer {
   void do_accept() {
     auto accept_cb = [this](std::error_code ec, tcp::socket socket) {
       if (!ec) {
-        std::make_shared<Session>(std::move(socket), *clients_)->start();
+        std::make_shared<Session>(std::move(socket), clients_)->start();
       }
 
       do_accept();
