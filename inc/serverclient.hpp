@@ -4,11 +4,11 @@
 
 #include <memory>
 
-#include "tcpiomsg.hpp"
+#include "abstractiomsg.hpp"
 
 class ServerClient {
  public:
-  virtual void deliver(std::unique_ptr<AbstractIoMsg> const &msg) = 0;
+  virtual void deliver(IoMsg const &msg) = 0;
   virtual ~ServerClient() {
   };
 };

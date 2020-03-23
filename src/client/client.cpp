@@ -2,127 +2,107 @@
 #include <deque>
 #include <iostream>
 #include <thread>
-
-#include "tcpiomsg.hpp"
+#include "abstractiomsg.hpp"
 #include "asio.hpp"
+#include "tcpdecoder.hpp"
+#include "tcpencoder.hpp"
 
 using asio::ip::tcp;
 
-class chat_client
-{
-public:
-  chat_client(asio::io_context& io_context,
-      const tcp::resolver::results_type& endpoints)
-    : io_context_(io_context),
-      socket_(io_context)
-  {
+class chat_client {
+ public:
+  chat_client(asio::io_context &io_context,
+              const tcp::resolver::results_type &endpoints)
+      :
+      encoder_(std::make_unique<TcpEncoder>()),
+      decoder_(std::make_unique<TcpDecoder>()),
+      io_context_(io_context),
+      socket_(io_context),
+      read_msg_(IoMsg(4,512)){
     do_connect(endpoints);
   }
 
-  void write(const tcpmsg& msg)
-  {
-    asio::post(io_context_,
-        [this, msg]()
-        {
-          bool write_in_progress = !write_msgs_.empty();
-          write_msgs_.push_back(msg);
-          if (!write_in_progress)
-          {
-            do_write();
-          }
-        });
-  }
-
-  void close()
-  {
-    asio::post(io_context_, [this]() { socket_.close(); });
-  }
-
-private:
-  void do_connect(const tcp::resolver::results_type& endpoints)
-  {
-    asio::async_connect(socket_, endpoints,
-        [this](std::error_code ec, tcp::endpoint)
-        {
-          if (!ec)
-          {
-            do_read_header();
-          }
-        });
-  }
-
-  void do_read_header()
-  {
-    auto rb_or_close = [this](std::error_code ec, std::size_t /*length*/)
-    {
-      if (!ec && read_msg_.decode_header())
-      {
-        do_read_body();
+  std::unique_ptr<AbstractEncoder> encoder_;
+  std::unique_ptr<AbstractDecoder> decoder_;
+  void write(const IoMsg &msg) {
+    asio::post(io_context_, [this, msg]() {
+      bool write_in_progress = !write_msgs_.empty();
+      write_msgs_.push_back(msg);
+      if (!write_in_progress) {
+        do_write();
       }
-      else
-      {
+    });
+  }
+
+  void close() {
+    asio::post(io_context_, [this]() {
+      socket_.close();
+    });
+  }
+
+ private:
+  void do_connect(const tcp::resolver::results_type &endpoints) {
+    asio::async_connect(socket_, endpoints,
+                        [this](std::error_code ec, tcp::endpoint) {
+                          if (!ec) {
+                            do_read_header();
+                          }
+                        });
+  }
+
+  void do_read_header() {
+    auto rb_or_close = [this](std::error_code ec, std::size_t /*length*/) {
+      if (!ec && decoder_->decode_header(read_msg_)) {
+        do_read_body();
+      } else {
         socket_.close();
       }
     };
-    asio::async_read(socket_,
-        asio::buffer(read_msg_.data(), 4),
-        rb_or_close);
+    asio::async_read(socket_, asio::buffer(read_msg_.data.data(), 4),
+                     rb_or_close);
   }
 
-  void do_read_body()
-  {
+  void do_read_body() {
     asio::async_read(socket_,
-        asio::buffer(read_msg_.body(), read_msg_.body_length()),
-        [this](std::error_code ec, std::size_t /*length*/)
-        {
-          if (!ec)
-          {
-            std::cout.write(read_msg_.body(), read_msg_.body_length());
-            std::cout << "\n";
-            do_read_header();
-          }
-          else
-          {
-            socket_.close();
-          }
-        });
+                     asio::buffer(read_msg_.body(), read_msg_.body_len),
+                     [this](std::error_code ec, std::size_t /*length*/) {
+                       if (!ec) {
+                         std::cout.write(read_msg_.body(), read_msg_.body_len);
+                         std::cout << "\n";
+                         do_read_header();
+                       } else {
+                         socket_.close();
+                       }
+                     });
   }
 
-  void do_write()
-  {
-    asio::async_write(socket_,
-        asio::buffer(write_msgs_.front().data(),
-          write_msgs_.front().length()),
-        [this](std::error_code ec, std::size_t /*length*/)
-        {
-          if (!ec)
-          {
+  void do_write() {
+    asio::async_write(
+        socket_,
+        asio::buffer(write_msgs_.front().data.data(),
+                     write_msgs_.front().length()),
+        [this](std::error_code ec, std::size_t /*length*/) {
+          if (!ec) {
             write_msgs_.pop_front();
-            if (!write_msgs_.empty())
-            {
+            if (!write_msgs_.empty()) {
               do_write();
             }
-          }
-          else
-          {
+          } else {
             socket_.close();
           }
         });
   }
 
-private:
-  asio::io_context& io_context_;
+ private:
+  asio::io_context &io_context_;
   tcp::socket socket_;
-  tcpmsg read_msg_;
-  task_queue write_msgs_;
+  IoMsg read_msg_;
+  std::deque<IoMsg> write_msgs_;
 };
 
-int main(int argc, char* argv[])
-{
-  try
-  {
-    if (argc != 3)
-    {
+int main(int argc, char *argv[]) {
+  try {
+    if (argc != 3) {
       std::cerr << "Usage: chat_client <host> <port>\n";
       return 1;
     }
@@ -133,23 +113,22 @@ int main(int argc, char* argv[])
     auto endpoints = resolver.resolve(argv[1], argv[2]);
     chat_client c(io_context, endpoints);
 
-    std::thread t([&io_context](){ io_context.run(); });
+    std::thread t([&io_context]() {
+      io_context.run();
+    });
 
     char line[512 + 1];
-    while (std::cin.getline(line, 512 + 1))
-    {
-      tcpmsg message;
-      message.body_length(std::strlen(line));
-      std::memcpy(message.body(), line, message.body_length());
-      message.encode_header();
+    while (std::cin.getline(line, 512 + 1)) {
+      IoMsg message(4, 512);
+      message.body_len = std::strlen(line);
+      std::memcpy(message.body(), line, message.body_len);
+      c.encoder_->encode_header(message);
       c.write(message);
     }
 
     c.close();
     t.join();
-  }
-  catch (std::exception& e)
-  {
+  } catch (std::exception &e) {
     std::cerr << "Exception: " << e.what() << "\n";
   }
 

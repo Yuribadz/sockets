@@ -2,9 +2,10 @@
 #define TCPCLIENTLIST_HPP
 
 #include <set>
-
+#include <deque>
 #include "serverclient.hpp"
 #include "abstractclientclist.hpp"
+#include "abstractiomsg.hpp"
 
 class TcpClientsList : public AbstractClientsList {
  public:
@@ -17,13 +18,13 @@ class TcpClientsList : public AbstractClientsList {
   }
   void join(client_ptr client) override;
   void leave(client_ptr client) override;
-  void deliver(std::unique_ptr<AbstractIoMsg>const & msg) override;
+  void deliver(const IoMsg & msg) override;
 
  ~TcpClientsList(){};
  protected:
   std::set<client_ptr> m_Clients;
   unsigned int m_max_m_recent_msgs_;
-  tcp_msg_queue m_recent_msgs;
+  std::deque<IoMsg> m_recent_msgs;
 };
 
 #endif

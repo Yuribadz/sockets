@@ -19,7 +19,7 @@ class Session : public ServerClient,
       clients_(std::move(clients)),
       encoder_(std::make_unique<TcpEncoder>()),
       decoder_(std::make_unique<TcpDecoder>()),
-      read_msg_(std::make_unique<TcpIoMsg>()) {
+      read_msg_(IoMsg(4,512)) {
   }
 
   void start() {
@@ -27,13 +27,10 @@ class Session : public ServerClient,
     do_read_header();
   }
 
-  void deliver(std::unique_ptr<AbstractIoMsg> const &msg) override {
+  void deliver(const IoMsg &msg) override {
     std::cout << "deliver called" << "\n";
-    std::unique_ptr<AbstractIoMsg> sent = std::make_unique<TcpIoMsg>();
-    sent->body_length(msg->body_length());
-    std::strncpy(sent->data(), msg->const_data(), 516);
     bool write_in_progress = !write_msgs_.empty();
-    write_msgs_.push_back(std::move(sent));
+       write_msgs_.push_back(msg);
     if (!write_in_progress) {
       do_write();
     }
@@ -50,7 +47,7 @@ class Session : public ServerClient,
         clients_->leave(shared_from_this());
       }
     };
-    asio::async_read(socket_, asio::buffer(read_msg_->data(), 4), read_cb);
+    asio::async_read(socket_, asio::buffer(read_msg_.data.data(), 4), read_cb);
   }
 
   void do_read_body() {
@@ -65,7 +62,7 @@ class Session : public ServerClient,
       }
     };
     asio::async_read(socket_,
-                     asio::buffer(read_msg_->body(), read_msg_->body_length()),
+                     asio::buffer(read_msg_.body(), read_msg_.body_len),
                      read_cb);
   }
 
@@ -84,8 +81,8 @@ class Session : public ServerClient,
     };
     asio::async_write(
         socket_,
-        asio::buffer(write_msgs_.front()->data(),
-                     write_msgs_.front()->length()),
+        asio::buffer(write_msgs_.front().data.data(),
+                     write_msgs_.front().length()),
         write_cb);
   }
 
@@ -93,8 +90,8 @@ class Session : public ServerClient,
   std::unique_ptr<AbstractClientsList> clients_;
   std::unique_ptr<AbstractEncoder> encoder_;
   std::unique_ptr<AbstractDecoder> decoder_;
-  std::unique_ptr<AbstractIoMsg> read_msg_;
-  tcp_msg_queue write_msgs_;
+  IoMsg read_msg_;
+  std::deque<IoMsg> write_msgs_;
 };
 
 #endif
