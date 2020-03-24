@@ -8,6 +8,8 @@
 #include "tcpdecoder.hpp"
 #include <memory>
 #include <functional>
+#include <iostream>
+
 using asio::ip::tcp;
 
 using EncoderFunction = std::function<void (IoMsg &msg)>;
