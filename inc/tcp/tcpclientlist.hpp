@@ -21,7 +21,8 @@ class TcpClientsList : public AbstractClientsList {
   void deliver(const IoMsg & msg) override;
 
  ~TcpClientsList(){};
- protected:
+
+private:
   std::set<client_ptr> m_Clients;
   unsigned int m_max_m_recent_msgs_;
   std::deque<IoMsg> m_recent_msgs;

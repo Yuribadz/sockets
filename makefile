@@ -5,13 +5,13 @@ CXX := g++
 
 # Project paths
 OBJDIR   := obj
-SRC_DIR  := src/server
-INC_DIR  := inc
+SRC_DIR  := src/server src/server/tcp
+INC_DIR  := -I./inc -I./inc/tcp
 TEST_DIR := test
 
 OBJDIR_CLIENT   := obj
 SRC_DIR_CLIENT  := src/client
-INC_DIR_CLIENT  := inc
+INC_DIR_CLIENT  := inc inc/tcp
 TEST_DIR_CLIENT := test
 
 # Library flags and paths
@@ -24,8 +24,8 @@ GMOCK_LIBS     := -lgmock
 PTHREAD_LIBS   := -lpthread
 
 # Source files names and rules
-SRCS    := $(shell find $(SRC_DIR) -name '*.cpp')
-SRCDIRS := $(shell find $(SRC_DIR) -name '*.cpp' -exec dirname {} \; | uniq)
+SRCS    := $(shell find $(SRC_DIR) -maxdepth 1 -name '*.cpp')
+SRCDIRS := $(shell find $(SRC_DIR) -maxdepth 1 -name '*.cpp' -exec dirname {} \; | uniq)
 OBJS    := $(patsubst %.cpp,$(OBJDIR)/%.o,$(SRCS))
 DEPS    := $(patsubst %.cpp,$(OBJDIR)/%.d,$(SRCS))
 
@@ -55,7 +55,7 @@ GPROF   := -pg
 GTEST_FILTER  := --gtest_filter=
 FILTER := *
 
-INCLUDES       := -I./$(INC_DIR) -I./$(ASIO_INCLUDES) 
+INCLUDES       := $(INC_DIR) -I./$(ASIO_INCLUDES)
 test: INCLUDES += -I./$(GTEST_INCLUDES) -I./$(GMOCK_INCLUDES)
 CPPFLAGS       := $(DEBUG) -Wall -Wpedantic $(INCLUDES) -c $(ASIO_FLAGS)
 test: CPPFLAGS = $(DEBUG) -Wall -Wpedantic $(INCLUDES) $(TEST_INCLUDES) -c $(ASIO_FLAGS)
