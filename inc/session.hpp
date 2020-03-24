@@ -7,8 +7,11 @@
 #include "tcpencoder.hpp"
 #include "tcpdecoder.hpp"
 #include <memory>
-
+#include <functional>
 using asio::ip::tcp;
+
+using EncoderFunction = std::function<void (IoMsg &msg)>;
+using DecoderFunction = std::function<bool (IoMsg &msg)>;
 
 class Session : public ServerClient,
     public std::enable_shared_from_this<Session> {
@@ -17,9 +20,11 @@ class Session : public ServerClient,
       :
       socket_(std::move(socket)),
       clients_(std::move(clients)),
-      encoder_(std::make_unique<TcpEncoder>()),
-      decoder_(std::make_unique<TcpDecoder>()),
-      read_msg_(IoMsg(4,512)) {
+      encoder_(std::bind(&tcpio::encode_header, std::placeholders::_1)),
+      decoder_(std::bind(&tcpio::decode_header, std::placeholders::_1)),
+      read_msg_(
+          IoMsg(as_integer(TcpMsgHeaderLength::HEADER_LENGTH),
+                as_integer(TcpMsgMaxBodyLength::MAX_BODY_LENGTH))) {
   }
 
   void start() {
@@ -30,7 +35,7 @@ class Session : public ServerClient,
   void deliver(const IoMsg &msg) override {
     std::cout << "deliver called" << "\n";
     bool write_in_progress = !write_msgs_.empty();
-       write_msgs_.push_back(msg);
+    write_msgs_.push_back(msg);
     if (!write_in_progress) {
       do_write();
     }
@@ -41,7 +46,7 @@ class Session : public ServerClient,
     std::cout << "Do read_header callback" << "\n";
     auto self(shared_from_this());
     auto read_cb = [this, self](std::error_code ec, std::size_t /*length*/) {
-      if (!ec && decoder_->decode_header(read_msg_)) {
+      if (!ec && decoder_(read_msg_)) {
         do_read_body();
       } else {
         clients_->leave(shared_from_this());
@@ -88,8 +93,8 @@ class Session : public ServerClient,
 
   tcp::socket socket_;
   std::unique_ptr<AbstractClientsList> clients_;
-  std::unique_ptr<AbstractEncoder> encoder_;
-  std::unique_ptr<AbstractDecoder> decoder_;
+  EncoderFunction encoder_;
+  DecoderFunction decoder_;
   IoMsg read_msg_;
   std::deque<IoMsg> write_msgs_;
 };

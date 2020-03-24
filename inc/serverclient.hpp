@@ -4,7 +4,7 @@
 
 #include <memory>
 
-#include "abstractiomsg.hpp"
+#include "iomsg.hpp"
 
 class ServerClient {
  public:

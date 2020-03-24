@@ -5,7 +5,7 @@
 #include <deque>
 #include "serverclient.hpp"
 #include "abstractclientclist.hpp"
-#include "abstractiomsg.hpp"
+#include "iomsg.hpp"
 
 class TcpClientsList : public AbstractClientsList {
  public:

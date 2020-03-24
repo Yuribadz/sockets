@@ -2,8 +2,9 @@
 #define ABSTRACTCLIENTCLIST_HPP
 
 #include <set>
+
+#include "iomsg.hpp"
 #include "serverclient.hpp"
-#include "abstractiomsg.hpp"
 class AbstractClientsList {
  public:
   virtual void join(client_ptr client) = 0;

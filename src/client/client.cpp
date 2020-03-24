@@ -2,28 +2,35 @@
 #include <deque>
 #include <iostream>
 #include <thread>
-#include "abstractiomsg.hpp"
+#include <functional>
+
+#include "iomsg.hpp"
 #include "asio.hpp"
 #include "tcpdecoder.hpp"
 #include "tcpencoder.hpp"
 
 using asio::ip::tcp;
 
+using EncoderFunction = std::function<void (IoMsg &msg)>;
+using DecoderFunction = std::function<bool (IoMsg &msg)>;
+
 class chat_client {
  public:
   chat_client(asio::io_context &io_context,
               const tcp::resolver::results_type &endpoints)
       :
-      encoder_(std::make_unique<TcpEncoder>()),
-      decoder_(std::make_unique<TcpDecoder>()),
+      encoder_(std::bind(&tcpio::encode_header, std::placeholders::_1)),
+      decoder_(std::bind(&tcpio::decode_header, std::placeholders::_1)),
       io_context_(io_context),
       socket_(io_context),
-      read_msg_(IoMsg(4,512)){
+      read_msg_(
+          IoMsg(as_integer(TcpMsgHeaderLength::HEADER_LENGTH),
+                as_integer(TcpMsgMaxBodyLength::MAX_BODY_LENGTH))) {
     do_connect(endpoints);
   }
 
-  std::unique_ptr<AbstractEncoder> encoder_;
-  std::unique_ptr<AbstractDecoder> decoder_;
+  EncoderFunction encoder_;
+  DecoderFunction decoder_;
   void write(const IoMsg &msg) {
     asio::post(io_context_, [this, msg]() {
       bool write_in_progress = !write_msgs_.empty();
@@ -52,7 +59,7 @@ class chat_client {
 
   void do_read_header() {
     auto rb_or_close = [this](std::error_code ec, std::size_t /*length*/) {
-      if (!ec && decoder_->decode_header(read_msg_)) {
+      if (!ec && decoder_(read_msg_)) {
         do_read_body();
       } else {
         socket_.close();
@@ -122,7 +129,7 @@ int main(int argc, char *argv[]) {
       IoMsg message(4, 512);
       message.body_len = std::strlen(line);
       std::memcpy(message.body(), line, message.body_len);
-      c.encoder_->encode_header(message);
+      c.encoder_(message);
       c.write(message);
     }
 
