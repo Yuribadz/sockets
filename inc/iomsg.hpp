@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <algorithm>
+#include <string>
 
 template<typename Enumeration>
 constexpr auto as_integer(
