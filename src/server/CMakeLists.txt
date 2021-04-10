@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.2 FATAL_ERROR)
-
+project(sockets)
 # Target server
 add_executable(server server.cpp)
 target_include_directories(server

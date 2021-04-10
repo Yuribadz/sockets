@@ -1,6 +1,8 @@
  # This adds another subdirectory, which has 'project(gtest)'.
-  add_subdirectory(googletest)
-
+ project(sockets)
+ add_subdirectory(googletest)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
   # force static runtime libraries for msvc builds
 if(MSVC)
@@ -34,6 +36,7 @@ endif()
     gtest_main
     Threads::Threads
     asio::asio
+    client_test
     wsock32
     ws2_32)
   target_compile_definitions(runUnitTests
