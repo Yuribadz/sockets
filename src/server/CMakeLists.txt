@@ -12,6 +12,7 @@ target_include_directories(server
 target_compile_definitions(server
         PRIVATE
         ASIO_STANDALONE=1
+        ASIO_HAS_EXCEPTIONS=1
         ASIO_HAS_STD_ADDRESSOF=1
         ASIO_HAS_STD_ARRAY=1
         ASIO_HAS_CSTDINT=1

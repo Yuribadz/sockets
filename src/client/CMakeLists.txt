@@ -11,6 +11,7 @@ target_include_directories(client
 target_compile_definitions(client
         PRIVATE
         ASIO_STANDALONE=1
+        ASIO_HAS_EXCEPTIONS=1
         ASIO_HAS_STD_ADDRESSOF=1
         ASIO_HAS_STD_ARRAY=1
         ASIO_HAS_CSTDINT=1
